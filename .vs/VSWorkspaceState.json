@@ -1,0 +1,12 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\BaseWindow",
+    "\\Direct2DCircle",
+    "\\Direct2DCircle\\cpp",
+    "\\HelloWorld",
+    "\\HelloWorld\\cpp"
+  ],
+  "SelectedNode": "\\HelloWorld\\cpp\\HelloWorld.sln",
+  "PreviewInSolutionExplorer": false
+}
