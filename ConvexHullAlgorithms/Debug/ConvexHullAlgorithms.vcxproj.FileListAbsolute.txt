@@ -1,1 +1,0 @@
-C:\Users\natha\source\repos\CSE-381-HW2\ConvexHullAlgorithms\Debug\ConvexHullAlgorithms.exe

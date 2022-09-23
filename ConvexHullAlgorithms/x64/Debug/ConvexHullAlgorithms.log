@@ -1,4 +1,0 @@
-﻿  ConvexHullAlgorithms.cpp
-C:\Users\natha\source\repos\CSE-381-HW2\ConvexHullAlgorithms\ConvexHullAlgorithms.cpp(224,20): warning C4312: 'type cast': conversion from 'int' to 'HMENU' of greater size
-C:\Users\natha\source\repos\CSE-381-HW2\ConvexHullAlgorithms\ConvexHullAlgorithms.cpp(304,20): warning C4244: '=': conversion from 'WPARAM' to 'int', possible loss of data
-  ConvexHullAlgorithms.vcxproj -> C:\Users\natha\source\repos\CSE-381-HW2\ConvexHullAlgorithms\x64\Debug\ConvexHullAlgorithms.exe
