@@ -138,8 +138,21 @@ class MainWindow : public BaseWindow<MainWindow>
         }
     }
 
+    shared_ptr<Edge> EdgeSelection()
+    {
+        if (edgeSelection == edges.end())
+        {
+            return nullptr;
+        }
+        else
+        {
+            return (*edgeSelection);
+        }
+    }
+
     void    ClearSelection() { selection = ellipses.end(); }
     HRESULT InsertEllipse(float x, float y);
+    HRESULT InsertEdge(MyEllipse p1, MyEllipse p2);
 
     BOOL    HitTest(float x, float y);
     void    SetMode(Mode m);
@@ -392,6 +405,26 @@ HRESULT MainWindow::InsertEllipse(float x, float y)
     return S_OK;
 }
 
+HRESULT MainWindow::InsertEdge(MyEllipse p1, MyEllipse p2)
+{
+    try
+    {
+        edgeSelection = edges.insert(
+            edges.end(),
+            shared_ptr<Edge>(new Edge()));
+
+        EdgeSelection()->ellipse1 = p1;
+        EdgeSelection()->ellipse2 = p2;
+        EdgeSelection()->color = D2D1::ColorF(colors[nextColor]);
+        nextColor = (nextColor + 1) % ARRAYSIZE(colors);
+    }
+    catch (std::bad_alloc)
+    {
+        return E_OUTOFMEMORY;
+    }
+    return S_OK;
+}
+
 
 BOOL MainWindow::HitTest(float x, float y)
 {
@@ -523,11 +556,29 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int nCmdShow)
     ellipses.clear();
     edges.clear();
     DiscardGraphicsResources();
-    InsertEllipse(100.0, 100.0);
-    InsertEllipse(50.0, 100.0);
-    InsertEllipse(200.0, 100.0);
-    InsertEllipse(200.0, 200.0);
-    InsertEllipse(100.0, 200.0);
+    RECT rc;
+    GetClientRect(m_hwnd, &rc);
+
+    int width = rc.right - rc.left;
+    int height = rc.bottom - rc.top;
+    float x = ((width/2 - 180) * ((float)rand() / RAND_MAX)) + 80;
+    float y = ((height/2 - 60) * ((float)rand() / RAND_MAX)) + 10;
+
+    InsertEllipse(x, y);
+    x = ((width / 2 - 80) * ((float)rand() / RAND_MAX)) + 80;
+    y = ((height / 2 - 10) * ((float)rand() / RAND_MAX)) + 10;
+    InsertEllipse(x, y);
+    x = ((width / 2 - 80) * ((float)rand() / RAND_MAX)) + 80;
+    y = ((height / 2 - 10) * ((float)rand() / RAND_MAX)) + 10;
+    InsertEllipse(x, y);
+    x = ((width / 2 - 80) * ((float)rand() / RAND_MAX)) + 80;
+    y = ((height / 2 - 10) * ((float)rand() / RAND_MAX)) + 10;
+   InsertEllipse(x, y);
+   x = ((width / 2 - 80) * ((float)rand() / RAND_MAX)) + 80;
+   y = ((height / 2 - 10) * ((float)rand() / RAND_MAX)) + 10;
+    InsertEllipse(x, y);
+ 
+
     InvalidateRect(m_hwnd, NULL, FALSE);
 }
 
