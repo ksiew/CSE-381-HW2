@@ -65,6 +65,7 @@ struct MyEllipse
         pRT->DrawEllipse(ellipse, pBrush, 1.0f);
     }
 
+    //checks if given coordinates overlap with this ellipse
     BOOL HitTest(float x, float y)
     {
         const float a = ellipse.radiusX;
@@ -167,7 +168,6 @@ class MainWindow : public BaseWindow<MainWindow>
     void    OnLButtonDown(int pixelX, int pixelY, DWORD flags);
     void    OnLButtonUp();
     void    OnMouseMove(int pixelX, int pixelY, DWORD flags);
-    void    OnKeyDown(UINT vkey);
 
 public:
 
@@ -204,12 +204,14 @@ HRESULT MainWindow::CreateGraphicsResources()
     return hr;
 }
 
+//deletes currently drawn images
 void MainWindow::DiscardGraphicsResources()
 {
     SafeRelease(&pRenderTarget);
     SafeRelease(&pBrush);
 }
 
+//tells D2D1 what needs to been drawn
 void MainWindow::OnPaint()
 {
     HRESULT hr = CreateGraphicsResources();
@@ -233,6 +235,7 @@ void MainWindow::OnPaint()
         }
 
         /*
+        * not sure why this stuff is here
         if (Selection())
         {
             pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::Red));
@@ -270,6 +273,7 @@ void MainWindow::Resize()
     }
 }
 
+//for dragging dots
 void MainWindow::OnLButtonDown(int pixelX, int pixelY, DWORD flags)
 {
     const float dipX = DPIScale::PixelsToDipsX(pixelX);
@@ -297,6 +301,7 @@ void MainWindow::OnLButtonDown(int pixelX, int pixelY, DWORD flags)
     InvalidateRect(m_hwnd, NULL, FALSE);
 }
 
+//tells window dot is no longer being dragged
 void MainWindow::OnLButtonUp()
 {
     if ((mode == DrawMode) && Selection())
@@ -331,38 +336,6 @@ void MainWindow::OnMouseMove(int pixelX, int pixelY, DWORD flags)
 }
 
 
-void MainWindow::OnKeyDown(UINT vkey)
-{
-    switch (vkey)
-    {
-    case VK_BACK:
-    case VK_DELETE:
-        if ((mode == SelectMode) && Selection())
-        {
-            ellipses.erase(selection);
-            ClearSelection();
-            SetMode(SelectMode);
-            InvalidateRect(m_hwnd, NULL, FALSE);
-        };
-        break;
-
-    case VK_LEFT:
-        MoveSelection(-1, 0);
-        break;
-
-    case VK_RIGHT:
-        MoveSelection(1, 0);
-        break;
-
-    case VK_UP:
-        MoveSelection(0, -1);
-        break;
-
-    case VK_DOWN:
-        MoveSelection(0, 1);
-        break;
-    }
-}
 
 //this function checks all ellipses and inserts an edge if one is valid
 void MainWindow::checkEdges(shared_ptr<MyEllipse> curr) {
@@ -393,6 +366,7 @@ void MainWindow::checkEdges(shared_ptr<MyEllipse> curr) {
     }
 }
 
+//adds ellipse to draw list
 HRESULT MainWindow::InsertEllipse(float x, float y)
 {
     try
@@ -435,7 +409,7 @@ HRESULT MainWindow::InsertEdge(MyEllipse p1, MyEllipse p2)
     return S_OK;
 }
 
-
+//runs ellipse hittest function on all dots
 BOOL MainWindow::HitTest(float x, float y)
 {
     for (auto i = ellipses.rbegin(); i != ellipses.rend(); ++i)
@@ -642,7 +616,6 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_KEYDOWN:
-        OnKeyDown((UINT)wParam);
         return 0;
 
     case WM_COMMAND:
