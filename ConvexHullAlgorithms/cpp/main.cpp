@@ -118,6 +118,7 @@ class MainWindow : public BaseWindow<MainWindow>
     Mode                    mode;
     size_t                  nextColor;
 
+    //draw lists, everything in these will be drawn
     list<shared_ptr<MyEllipse>>             ellipses;
     list<shared_ptr<MyEllipse>>::iterator   selection;
 
@@ -231,11 +232,19 @@ void MainWindow::OnPaint()
             (*i)->Draw(pRenderTarget, pBrush);
         }
 
+        /*
         if (Selection())
         {
             pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::Red));
             pRenderTarget->DrawEllipse(Selection()->ellipse, pBrush, 2.0f);
         }
+
+        if (EdgeSelection())
+        {
+            pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::Red));
+            pRenderTarget->DrawLine(EdgeSelection()->ellipse1.getPoint(), EdgeSelection()->ellipse2.getPoint(), pBrush, 2.0f);
+        }
+        */
 
         hr = pRenderTarget->EndDraw();
         if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET)
@@ -405,6 +414,7 @@ HRESULT MainWindow::InsertEllipse(float x, float y)
     return S_OK;
 }
 
+//takes 2 ellipses and adds an edge into the draw list
 HRESULT MainWindow::InsertEdge(MyEllipse p1, MyEllipse p2)
 {
     try
@@ -551,6 +561,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int nCmdShow)
     return 0;
 }
 
+//Occurs when button is pressed, resets dots and changes alogrithm
  void MainWindow::setAlgo(int algo) {
     currAlgo = algo;
     ellipses.clear();
