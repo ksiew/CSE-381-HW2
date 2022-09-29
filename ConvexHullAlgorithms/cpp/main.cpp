@@ -155,7 +155,7 @@ struct Graph {
 
     /*Goes through list of all ellipses and adds whiceverh ones belong to the outer edge to OuterEllipses
     */
-    void findOuter() {
+    void findOuter(Graph* graph1, Graph* graph2) {
         switch (algo) {
             case MDIFFERENCE:
 
@@ -181,7 +181,7 @@ struct Graph {
 
     /*Goes through list of all Outer ellipses and creates edges using 
     */
-    void findEdges() {
+    void findEdges(Graph *graph1, Graph *graph2) {
         switch (currAlgo) {
             switch (algo) {
             case MDIFFERENCE:
@@ -207,9 +207,13 @@ struct Graph {
         }
     }
 
-    void calculate() {
-        findOuter();
-        findEdges();
+    /*For Graph1: graph1 = graph2; graph2 = graph3
+    * For Graph2: graph1 = graph1; graph2 = graph3
+    * For Graph3: graph1 = graph1; graph2 = graph2
+    */
+    void calculate(Graph *graph1, Graph *graph2) {
+        findOuter(graph1, graph2);
+        findEdges(graph1, graph2);
 
     }
 
@@ -349,8 +353,6 @@ void MainWindow::DiscardGraphicsResources()
 * @param Graph: pointer to graph whose ellipses and edges are being added
 */
 void MainWindow::fillDraw(Graph* graph) {
-
-    (*graph).calculate();
     for (shared_ptr<MyEllipse> p : graph->allEllipses) {
         selection = ellipses.insert(ellipses.end(), 1, p);
     }
@@ -366,9 +368,9 @@ void MainWindow::OnPaint()
     HRESULT hr = CreateGraphicsResources();
     if (SUCCEEDED(hr))
     {
-        graph1.calculate();
-        graph2.calculate();
-        graph3.calculate();
+        graph1.calculate(&graph2, &graph3);
+        graph2.calculate(&graph1, &graph3);
+        graph3.calculate(&graph1,&graph2);
 
         PAINTSTRUCT ps;
         BeginPaint(m_hwnd, &ps);
