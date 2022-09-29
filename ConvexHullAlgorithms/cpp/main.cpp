@@ -149,11 +149,33 @@ struct Graph {
         }
     }
 
+    //set these values in setAlgo(), use to determine how points/edges are calculated
+    int algo;
+
+
     /*Goes through list of all ellipses and adds whiceverh ones belong to the outer edge to OuterEllipses
     */
     void findOuter() {
-        switch (currAlgo) {
-            //TODO
+        switch (algo) {
+            case MDIFFERENCE:
+
+                break;
+
+            case MSUM:
+
+                break;
+
+            case QHULL:
+
+                break;
+
+            case PCHULL:
+
+                break;
+
+            case GJK:
+
+                break;
         }
     }
 
@@ -161,7 +183,27 @@ struct Graph {
     */
     void findEdges() {
         switch (currAlgo) {
-            //TODO
+            switch (algo) {
+            case MDIFFERENCE:
+
+                break;
+
+            case MSUM:
+
+                break;
+
+            case QHULL:
+
+                break;
+
+            case PCHULL:
+
+                break;
+
+            case GJK:
+
+                break;
+            }
         }
     }
 
@@ -249,6 +291,7 @@ class MainWindow : public BaseWindow<MainWindow>
     BOOL    HitTest(float x, float y);
     void    SetMode(Mode m);
     void    checkEdges(shared_ptr<MyEllipse>);
+    void    createPoint(Graph* graph);
     void    MoveSelection(float x, float y);
     HRESULT CreateGraphicsResources();
     void    DiscardGraphicsResources();
@@ -323,7 +366,9 @@ void MainWindow::OnPaint()
     HRESULT hr = CreateGraphicsResources();
     if (SUCCEEDED(hr))
     {
-        if (currAlgo == PCHULL) fillDraw(&convexGraph);
+        graph1.calculate();
+        graph2.calculate();
+        graph3.calculate();
 
         PAINTSTRUCT ps;
         BeginPaint(m_hwnd, &ps);
@@ -672,6 +717,16 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int nCmdShow)
     return 0;
 }
 
+void MainWindow::createPoint(Graph* graph) {
+    RECT rc;
+    GetClientRect(m_hwnd, &rc);
+    int width = rc.right - rc.left;
+    int height = rc.bottom - rc.top;
+    float x = ((width / 2 - 80) * ((float)rand() / RAND_MAX)) + 80;
+    float y = ((height / 2 - 10) * ((float)rand() / RAND_MAX)) + 10;
+    InsertEllipseGraph(graph, x, y);
+}
+
 //Occurs when button is pressed, resets dots and changes alogrithm
  void MainWindow::setAlgo(int algo) {
     currAlgo = algo;
@@ -681,27 +736,49 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int nCmdShow)
     graph2.clear();
     graph3.clear();
     DiscardGraphicsResources();
-    RECT rc;
-    GetClientRect(m_hwnd, &rc);
 
-    int width = rc.right - rc.left;
-    int height = rc.bottom - rc.top;
-    float x = ((width/2 - 180) * ((float)rand() / RAND_MAX)) + 80;
-    float y = ((height/2 - 60) * ((float)rand() / RAND_MAX)) + 10;
+    for (int i = 0; i < 5; i++) {
+        switch (currAlgo) {
+            case MDIFFERENCE:
+                graph1.algo = QHULL;
+                createPoint(&graph1);
+                graph2.algo = QHULL;
+                createPoint(&graph2);
+                graph3.algo = MDIFFERENCE;
+                createPoint(&graph3);
+                break;
 
-    InsertEllipseGraph(&graph1, x, y);
-    x = ((width / 2 - 80) * ((float)rand() / RAND_MAX)) + 80;
-    y = ((height / 2 - 10) * ((float)rand() / RAND_MAX)) + 10;
-    InsertEllipseGraph(&graph1, x, y);
-    x = ((width / 2 - 80) * ((float)rand() / RAND_MAX)) + 80;
-    y = ((height / 2 - 10) * ((float)rand() / RAND_MAX)) + 10;
-    InsertEllipseGraph(&graph2, x, y);
-    x = ((width / 2 - 80) * ((float)rand() / RAND_MAX)) + 80;
-    y = ((height / 2 - 10) * ((float)rand() / RAND_MAX)) + 10;
-   InsertEllipseGraph(&graph3, x, y);
-   //x = ((width / 2 - 80) * ((float)rand() / RAND_MAX)) + 80;
-   //y = ((height / 2 - 10) * ((float)rand() / RAND_MAX)) + 10;
-   // InsertEllipse(x, y);
+            case MSUM:
+                graph1.algo = QHULL;
+                createPoint(&graph1);
+                graph2.algo = QHULL;
+                createPoint(&graph2);
+                graph3.algo = MSUM;
+                createPoint(&graph3);
+                break;
+
+            case QHULL:
+                graph1.algo = QHULL;
+                createPoint(&graph1);
+                break;
+
+            case PCHULL:
+                graph1.algo = QHULL;
+                createPoint(&graph1);
+                graph2.algo = PCHULL;
+                createPoint(&graph2);
+                break;
+
+            case GJK:
+                //IDK TODO
+                createPoint(&graph1);
+                break;
+
+            default:
+                createPoint(&graph1);
+                break;
+        }
+    }
     fillDraw(&graph1);
     fillDraw(&graph2);
     fillDraw(&graph3);
