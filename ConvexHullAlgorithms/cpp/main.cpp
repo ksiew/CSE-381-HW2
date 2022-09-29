@@ -95,7 +95,89 @@ struct Edge
 
 };
 
+/*Struct for a graph
+* 
+* @param allEllipses: List of all ellipses in graph
+* @param outerEllipses: List of all outer ellipses
+* @param edges: List of all edges
+* 
+* @see EdgeSelection
+*/
+struct Graph {
+    list<shared_ptr<MyEllipse>>             allEllipses;
+    list<shared_ptr<MyEllipse>>::iterator   allSelection;
 
+    list<shared_ptr<MyEllipse>>             outerEllipses;
+    list<shared_ptr<MyEllipse>>::iterator   outerSelection;
+
+    list< shared_ptr<Edge >>                     edges;
+    list< shared_ptr<Edge >>::iterator   edgeSelection;
+
+    shared_ptr<MyEllipse> AllSelection()
+    {
+        if (allSelection == allEllipses.end())
+        {
+            return nullptr;
+        }
+        else
+        {
+            return (*allSelection);
+        }
+    }
+    
+    shared_ptr<MyEllipse> OuterSelection()
+    {
+        if (outerSelection == outerEllipses.end())
+        {
+            return nullptr;
+        }
+        else
+        {
+            return (*outerSelection);
+        }
+    }
+
+    shared_ptr<Edge> EdgeSelection()
+    {
+        if (edgeSelection == edges.end())
+        {
+            return nullptr;
+        }
+        else
+        {
+            return (*edgeSelection);
+        }
+    }
+
+    /*Goes through list of all ellipses and adds whiceverh ones belong to the outer edge to OuterEllipses
+    */
+    void findOuter() {
+        switch (currAlgo) {
+            //TODO
+        }
+    }
+
+    /*Goes through list of all Outer ellipses and creates edges using 
+    */
+    void findEdges() {
+        switch (currAlgo) {
+            //TODO
+        }
+    }
+
+    void calculate() {
+        findOuter();
+        findEdges();
+
+    }
+
+    void clear() {
+        allEllipses.clear();
+        outerEllipses.clear();
+        edges.clear();
+    }
+
+};
 
 D2D1::ColorF::Enum colors[] = { D2D1::ColorF::LimeGreen };
 
@@ -126,6 +208,12 @@ class MainWindow : public BaseWindow<MainWindow>
     list< shared_ptr<Edge >>                     edges;
     list< shared_ptr<Edge >>::iterator   edgeSelection;
 
+    //graphs to be used
+    Graph graph1;
+    Graph graph2;
+    Graph graph3;
+    Graph convexGraph;
+
 
      
     shared_ptr<MyEllipse> Selection() 
@@ -154,7 +242,9 @@ class MainWindow : public BaseWindow<MainWindow>
 
     void    ClearSelection() { selection = ellipses.end(); }
     HRESULT InsertEllipse(float x, float y);
+    void fillDraw(Graph* graph);
     HRESULT InsertEdge(MyEllipse p1, MyEllipse p2);
+    HRESULT InsertEllipseGraph(Graph* graph, float x, float y);
 
     BOOL    HitTest(float x, float y);
     void    SetMode(Mode m);
@@ -211,12 +301,30 @@ void MainWindow::DiscardGraphicsResources()
     SafeRelease(&pBrush);
 }
 
+/*Adds all edges and ellipses of a graph to drawing ellipses and edges
+* 
+* @param Graph: pointer to graph whose ellipses and edges are being added
+*/
+void MainWindow::fillDraw(Graph* graph) {
+
+    (*graph).calculate();
+    for (shared_ptr<MyEllipse> p : graph->allEllipses) {
+        selection = ellipses.insert(ellipses.end(), 1, p);
+    }
+    for (shared_ptr<Edge> p : graph->edges) {
+        edgeSelection = edges.insert(edges.end(), 1, p);
+    }
+    
+}
+
 //tells D2D1 what needs to been drawn
 void MainWindow::OnPaint()
 {
     HRESULT hr = CreateGraphicsResources();
     if (SUCCEEDED(hr))
     {
+        if (currAlgo == PCHULL) fillDraw(&convexGraph);
+
         PAINTSTRUCT ps;
         BeginPaint(m_hwnd, &ps);
      
@@ -329,7 +437,6 @@ void MainWindow::OnMouseMove(int pixelX, int pixelY, DWORD flags)
             // Move the ellipse.
             Selection()->ellipse.point.x = dipX + ptMouse.x;
             Selection()->ellipse.point.y = dipY + ptMouse.y;
-            checkEdges(Selection());
         }
         InvalidateRect(m_hwnd, NULL, FALSE);
     }
@@ -339,8 +446,8 @@ void MainWindow::OnMouseMove(int pixelX, int pixelY, DWORD flags)
 
 //this function checks all ellipses and inserts an edge if one is valid
 void MainWindow::checkEdges(shared_ptr<MyEllipse> curr) {
-    for (shared_ptr<MyEllipse> p : ellipses) {
-        if (p != curr) {
+    for (auto i = ellipses.rbegin(); i != ellipses.rend(); ++i) {
+        if (*i != curr) {
             switch (currAlgo) {
             case MDIFFERENCE:
 
@@ -380,6 +487,33 @@ HRESULT MainWindow::InsertEllipse(float x, float y)
         Selection()->color = D2D1::ColorF( colors[nextColor] );
         checkEdges(Selection());
         nextColor = (nextColor + 1) % ARRAYSIZE(colors);
+    }
+    catch (std::bad_alloc)
+    {
+        return E_OUTOFMEMORY;
+    }
+    return S_OK;
+}
+
+/*inserts ellipse into a specific graph
+* @param graph: pointer to graph ellipse is being inserted into
+* @param x: x coordinate of ellipse
+* @param y: y coordinate of ellipse
+
+*/
+HRESULT MainWindow::InsertEllipseGraph(Graph *graph, float x, float y)
+{
+    try
+    {
+        graph->allSelection = graph->allEllipses.insert(
+            graph->allEllipses.end(),
+            shared_ptr<MyEllipse>(new MyEllipse()));
+
+        graph->AllSelection()->ellipse.point = ptMouse = D2D1::Point2F(x, y);
+        graph->AllSelection()->ellipse.radiusX = graph->AllSelection()->ellipse.radiusY = 10.0f;
+        graph->AllSelection()->color = D2D1::ColorF(colors[nextColor]);
+        nextColor = (nextColor + 1) % ARRAYSIZE(colors);
+
     }
     catch (std::bad_alloc)
     {
@@ -457,10 +591,13 @@ void MainWindow::SetMode(Mode m)
     SetCursor(hCursor);
 }
 HWND CreateButton(HWND m_hWnd, int algo) {
+    HFONT hFont = CreateFont(8, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET,
+        OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
+        DEFAULT_PITCH | FF_DONTCARE, TEXT("Tahoma"));
     LPCWSTR text;
     switch (algo) {
     case MDIFFERENCE:
-        text = L"MDIFFERENCE";
+        text = L"MDIF";
         break;
 
     case MSUM:
@@ -468,11 +605,11 @@ HWND CreateButton(HWND m_hWnd, int algo) {
         break;
 
     case QHULL:
-        text = L"QUICK HULL";
+        text = L"QH";
         break;
 
     case PCHULL:
-        text = L"PC HULL";
+        text = L"PCH";
         break;
 
     case GJK:
@@ -491,9 +628,9 @@ HWND CreateButton(HWND m_hWnd, int algo) {
         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,           // Window style
 
         // Size and position
-        10,         // x position 
+        0,         // x position 
         50 + algo,         // y position 
-        40,        // Button width
+        50,        // Button width
         50,        // Button height
 
         m_hWnd,       // Parent window   
@@ -540,6 +677,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int nCmdShow)
     currAlgo = algo;
     ellipses.clear();
     edges.clear();
+    graph1.clear();
+    graph2.clear();
+    graph3.clear();
     DiscardGraphicsResources();
     RECT rc;
     GetClientRect(m_hwnd, &rc);
@@ -549,20 +689,23 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int nCmdShow)
     float x = ((width/2 - 180) * ((float)rand() / RAND_MAX)) + 80;
     float y = ((height/2 - 60) * ((float)rand() / RAND_MAX)) + 10;
 
-    InsertEllipse(x, y);
+    InsertEllipseGraph(&graph1, x, y);
     x = ((width / 2 - 80) * ((float)rand() / RAND_MAX)) + 80;
     y = ((height / 2 - 10) * ((float)rand() / RAND_MAX)) + 10;
-    InsertEllipse(x, y);
+    InsertEllipseGraph(&graph1, x, y);
     x = ((width / 2 - 80) * ((float)rand() / RAND_MAX)) + 80;
     y = ((height / 2 - 10) * ((float)rand() / RAND_MAX)) + 10;
-    InsertEllipse(x, y);
+    InsertEllipseGraph(&graph2, x, y);
     x = ((width / 2 - 80) * ((float)rand() / RAND_MAX)) + 80;
     y = ((height / 2 - 10) * ((float)rand() / RAND_MAX)) + 10;
-   InsertEllipse(x, y);
-   x = ((width / 2 - 80) * ((float)rand() / RAND_MAX)) + 80;
-   y = ((height / 2 - 10) * ((float)rand() / RAND_MAX)) + 10;
-    InsertEllipse(x, y);
- 
+   InsertEllipseGraph(&graph3, x, y);
+   //x = ((width / 2 - 80) * ((float)rand() / RAND_MAX)) + 80;
+   //y = ((height / 2 - 10) * ((float)rand() / RAND_MAX)) + 10;
+   // InsertEllipse(x, y);
+    fillDraw(&graph1);
+    fillDraw(&graph2);
+    fillDraw(&graph3);
+  
 
     InvalidateRect(m_hwnd, NULL, FALSE);
 }
@@ -617,6 +760,9 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_KEYDOWN:
         return 0;
+
+    case WM_SETFONT:
+
 
     case WM_COMMAND:
         switch (LOWORD(wParam))
